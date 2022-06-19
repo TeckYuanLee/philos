@@ -14,7 +14,6 @@ all: $(NAME)
 
 $(NAME):		$(OBJS) 
 		$(CC) $(SRCS) -o $(NAME)
-		@$(MAKE) clean -sC
 
 clean:
 		@rm -f $(OBJS)
