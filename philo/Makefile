@@ -1,6 +1,6 @@
 NAME	=	philo
 CC		=	gcc
-CFLAGS	=	-pthread -I. -C #-Wall -Werror -Wextra -pthread -I. -c
+CFLAGS	=	-pthread -I. -c #-Wall -Werror -Wextra -pthread -I. -c
 ARFLAGS	= 	rcs
 
 SRCS	=	$(wildcard srcs/*.c)
@@ -8,7 +8,7 @@ OBJS	=	$(SRCS:srcs/%.c=obj/%.o)
 
 obj/%.o:	srcs/%.c
 		@mkdir -p obj
-		@gcc $(CFLAGS) -C $< -o $@ -Iincludes
+		@gcc $(CFLAGS) -c $< -o $@ -Iincludes
 
 all: $(NAME)
 
