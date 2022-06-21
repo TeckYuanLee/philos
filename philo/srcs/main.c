@@ -24,17 +24,16 @@ int	clean_exit(t_arg *args, t_philo **philos)
 	exit(0);
 }
 
-void	print_message(t_philo *philo, const char *message, t_msg_type type)
+uintmax_t	retrieve_time_since_ms(uintmax_t start)
 {
-	uintmax_t	time;
-	static const char	*colour[] = {RED, GRN, YEL, BLU, MAG, CYN};
+	struct timeval	time_now;
+	uintmax_t		time_ms;
 
-	time = retrieve_time_since_ms(philo->arg->start_ms);
-	printf("%s", colour[philo->seat % 6]);
-	printf("%ju\tphilosopher [%d] %s.", time, philo->seat, message);
-	if (philo->arg->no_of_eat && type == EAT)
-		printf(" (%d/%d)", philo->times_eaten + 1, philo->arg->no_of_eat);
-	printf("\n%s", WHT);
+	gettimeofday(&time_now, NULL);
+	time_ms = (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
+	if (time_ms < start)
+		return (0);
+	return (time_ms - start);
 }
 
 int	fill_args(t_arg *args, char **argv)
@@ -61,7 +60,7 @@ void	init_args(t_arg *args)
 	args->eat_ms = 0;
 	args->sleep_ms = 0;
 	args->no_of_eat = 0;
-	args->full_philos = 0;
+	args->philos_eaten = 0;
 	args->start_ms = retrieve_time_since_ms(0);
 	args->is_dead = false;
 	if (pthread_mutex_init(&args->msg_lock, NULL))

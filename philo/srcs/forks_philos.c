@@ -1,31 +1,40 @@
 #include "../includes/philo.h"
 
-int	lock_check(t_philo *philo, pthread_mutex_t *lock, const char *fn)
+void	*philo_start(void *philo_arg)
 {
-	if (pthread_mutex_lock(lock) != 0)
+	t_philo		*philo;
+	pthread_t	tid;
+
+	philo = (t_philo *)philo_arg;
+	philo->active = true;
+	if (pthread_create(&tid, NULL, &philo_check, philo_arg))
+		return ((void *)1);
+	if (philo->seat % 2 == 0)
+		usleep(1000);
+	update_eat_time(philo);
+	while (!philo_end(philo) && !done_eating(philo))
 	{
-		printf("philo [%d] | FAILED to lock in %s\n", philo->seat, fn);
-		return (1);
+		philo_action(philo);
+		usleep(1000);
 	}
-	return (0);
+	philo->active = false;
+	pthread_join(tid, NULL);
+	return (NULL);
 }
 
-int	status_change_message(t_philo *philo, const char *message, t_msg_type type)
+int	start_philo_threads(t_arg *args, t_philo *philos)
 {
-	if (lock_check(philo, &philo->arg->msg_lock, "status_change_message"))
-		return (1);
-	if (!philo_died(philo))
+	int	i;
+
+	i = -1;
+	while (philos && ++i < args->philos)
 	{
-		print_message(philo, message, type);
-		if (type == DEAD)
-		{
-			if (lock_check(philo, &philo->arg->dead_lock, "set_dead"))
-				return (1);
-			philo->arg->is_dead = true;
-			pthread_mutex_unlock(&philo->arg->dead_lock);
-		}
+		if (pthread_create(&philos[i].id, NULL, &philo_start, &philos[i]))
+			return (1);
 	}
-	pthread_mutex_unlock(&philo->arg->msg_lock);
+	i = -1;
+	while (++i < args->philos)
+		pthread_join(philos[i].id, NULL); //makes sure all threads execute its task before quitting program
 	return (0);
 }
 

@@ -13,26 +13,12 @@ void	u_sleep_better(uintmax_t usec)
 		usleep(100);
 }
 
-uintmax_t	retrieve_time_since_ms(uintmax_t start)
+void	update_eat_time(t_philo *philo)
 {
-	struct timeval	time_now;
-	uintmax_t		time_ms;
-
-	gettimeofday(&time_now, NULL);
-	time_ms = (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
-	if (time_ms < start)
-		return (0);
-	return (time_ms - start);
-}
-
-int	update_eat_time(t_philo *philo)
-{
-	if (lock_check(philo, &philo->eat_lock, "update_eat_time"))
-		return (1);
+	pthread_mutex_lock(&philo->eat_lock);
 	philo->last_ate_ms = retrieve_time_since_ms(0);
 	philo->deadline = philo->last_ate_ms + philo->arg->die_ms;
 	pthread_mutex_unlock(&philo->eat_lock);
-	return (0);
 }
 
 int	ft_atoi(const char *str)
@@ -60,4 +46,33 @@ int	ft_atoi(const char *str)
 		str++;
 	}
 	return (sign * integer);
+}
+
+void	print_message(t_philo *philo, const char *message, t_msg_type type)
+{
+	uintmax_t	time;
+	static const char	*colour[] = {RED, GRN, YEL, BLU, MAG, CYN};
+
+	time = retrieve_time_since_ms(philo->arg->start_ms);
+	printf("%s", colour[philo->seat % 6]);
+	printf("%ju\tphilosopher [%d] %s.", time, philo->seat, message);
+	if (philo->arg->no_of_eat && type == EAT)
+		printf(" (%d/%d)", philo->times_eaten + 1, philo->arg->no_of_eat);
+	printf("\n%s", WHT);
+}
+
+void	status_change_message(t_philo *philo, const char *message, t_msg_type type)
+{
+	pthread_mutex_lock(&philo->arg->msg_lock);
+	if (!philo_end(philo))
+	{
+		print_message(philo, message, type);
+		if (type == DEAD)
+		{
+			pthread_mutex_lock(&philo->arg->dead_lock);
+			philo->arg->is_dead = true;
+			pthread_mutex_unlock(&philo->arg->dead_lock);
+		}
+	}
+	pthread_mutex_unlock(&philo->arg->msg_lock);
 }

@@ -17,6 +17,7 @@
 # define ERR_ARGS "Error: Please provide valid arguments\n"
 # define ERR_MS "=> Philos 1-200; die, eat, sleep >= 60; no_of_eat > 0\n"
 # define ERR_GEN "Error initializing mutexes\n"
+# define ERR_LOCK "philo [%d] | FAILED to lock in %s\n"
 # define MSG_FORK " has taken a fork"
 # define MSG_EAT " is eating"
 # define MSG_SLEEP " is sleeping"
@@ -72,7 +73,7 @@ typedef struct s_arg
 	int				eat_ms;
 	int				sleep_ms;
 	int				no_of_eat;
-	int				full_philos;
+	int				philos_eaten;
 	uintmax_t		start_ms;
 	bool			is_dead;
 	pthread_mutex_t	msg_lock;
@@ -83,28 +84,26 @@ typedef struct s_arg
 
 void		init_args(t_arg *args);
 int			fill_args(t_arg *args, char **argv);
+uintmax_t	retrieve_time_since_ms(uintmax_t start);
 int			clean_exit(t_arg *args, t_philo **philos);
-void		print_message(t_philo *philo, const char *message, t_msg_type type);
 
 int			init_philos(t_arg *args, t_philo **philos);
 int			init_forks(t_arg *args);
 void		set_forks(int i, t_philo *philo, pthread_mutex_t *locks, pthread_mutex_t **p_locks);
-int			status_change_message(t_philo *philo, const char *message, t_msg_type type);
-int			lock_check(t_philo *philo, pthread_mutex_t *lock, const char *fn);
-
 int			start_philo_threads(t_arg *args, t_philo *philos);
 void		*philo_start(void *philo_arg);
-void		*philo_check(void *philo_arg);
-bool		philo_died(t_philo *philo);
-bool		done_eating(t_philo *philo);
 
-int			philo_take_forks(t_philo *philo);
-int			philo_eat_sleep_think(t_philo *philo);
+void		*philo_check(void *philo_arg);
+bool		philo_end(t_philo *philo);
+bool		done_eating(t_philo *philo);
+void		philo_action(t_philo *philo);
 void		*handle_eaten_death(t_philo *philo, char c);
 
-int			ft_atoi(const char *str);
-int			update_eat_time(t_philo *philo);
-uintmax_t	retrieve_time_since_ms(uintmax_t start);
+void		status_change_message(t_philo *philo, const char *message, t_msg_type type);
+void		print_message(t_philo *philo, const char *message, t_msg_type type);
+void		update_eat_time(t_philo *philo);
 void		u_sleep_better(uintmax_t usec);
+int			ft_atoi(const char *str);
+
 
 #endif
