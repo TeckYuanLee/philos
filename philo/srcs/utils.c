@@ -1,14 +1,16 @@
 #include "../includes/philo.h"
 
-uintmax_t	retrieve_time_us(void)
+void	u_sleep_better(uintmax_t usec)
 {
 	struct timeval	time;
-	uintmax_t		time_usec;
-
+	uintmax_t		start;
+	uintmax_t		end;
+	
 	gettimeofday(&time, NULL);
-	time_usec = (time.tv_sec * 1000) * 1000;
-	time_usec += time.tv_usec;
-	return (time_usec);
+	start = (time.tv_sec * 1000000) + time.tv_usec;
+	while ((gettimeofday(&time, NULL)
+			| (time.tv_sec * 1000000) + time.tv_usec - start) < usec)
+		usleep(100);
 }
 
 uintmax_t	retrieve_time_since_ms(uintmax_t start)
@@ -25,7 +27,7 @@ uintmax_t	retrieve_time_since_ms(uintmax_t start)
 
 int	update_eat_time(t_philo *philo)
 {
-	if (lock_check(philo, &philo->eat_lock, "update_eat_time") != 0)
+	if (lock_check(philo, &philo->eat_lock, "update_eat_time"))
 		return (1);
 	philo->last_ate_ms = retrieve_time_since_ms(0);
 	philo->deadline = philo->last_ate_ms + philo->arg->die_ms;
@@ -59,4 +61,3 @@ int	ft_atoi(const char *str)
 	}
 	return (sign * integer);
 }
-

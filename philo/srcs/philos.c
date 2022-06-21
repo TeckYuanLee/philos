@@ -1,25 +1,25 @@
 #include "../includes/philo.h"
 
-bool	has_eaten_enough(t_philo *philo)
-{
-	bool	enough;
-
-	enough = false;
-	if (lock_check(philo, &philo->eat_lock, "has_eaten_enough") != 0)
-		return (1);
-	if (philo->arg->no_of_eat > 0
-		&& philo->times_eaten == philo->arg->no_of_eat)
-		enough = true;
-	pthread_mutex_unlock(&philo->eat_lock);
-	return (enough);
-}
-
-bool	gameover(t_philo *philo)
+bool	done_eating(t_philo *philo)
 {
 	bool	done;
 
 	done = false;
-	if (lock_check(philo, &philo->arg->dead_lock, "gameover"))
+	if (lock_check(philo, &philo->eat_lock, "done_eating"))
+		return (1);
+	if (philo->arg->no_of_eat > 0
+		&& philo->times_eaten == philo->arg->no_of_eat)
+		done = true;
+	pthread_mutex_unlock(&philo->eat_lock);
+	return (done);
+}
+
+bool	philo_died(t_philo *philo)
+{
+	bool	done;
+
+	done = false;
+	if (lock_check(philo, &philo->arg->dead_lock, "philo_died"))
 		return (1);
 	if (philo->arg->is_dead == true
 		|| philo->arg->full_philos == philo->arg->philos)
@@ -42,10 +42,10 @@ void	*philo_check(void *philo_arg)
 			return ((void *)1);
 		current_time = retrieve_time_since_ms(0);
 		if (current_time > philo->deadline)
-			return (handle_death(philo));
+			return (handle_eaten_death(philo, 'd'));
 		pthread_mutex_unlock(&philo->eat_lock);
-		if (philo->arg->no_of_eat > 0 && has_eaten_enough(philo))
-			return (handle_full_philo(philo));
+		if (philo->arg->no_of_eat > 0 && done_eating(philo))
+			return (handle_eaten_death(philo, 'e'));
 		usleep(1000);
 	}
 	return (NULL);
@@ -64,10 +64,9 @@ void	*philo_start(void *philo_arg)
 		usleep(1000);
 	if (update_eat_time(philo) == 0)
 	{
-		while (!gameover(philo) && !has_eaten_enough(philo))
+		while (!philo_died(philo) && !done_eating(philo))
 		{
-			if (philo_take_forks(philo) || philo_eat(philo)
-				|| philo_sleep(philo) || philo_think(philo))
+			if (philo_take_forks(philo) || philo_eat_sleep_think(philo))
 				break ;
 			usleep(1000);
 		}
@@ -92,4 +91,3 @@ int	start_philo_threads(t_arg *args, t_philo *philos)
 		pthread_join(philos[i].id, NULL); //makes sure all threads execute its task before quitting program
 	return (0);
 }
-

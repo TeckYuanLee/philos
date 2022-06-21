@@ -16,19 +16,17 @@
 # define ERR_INPUT "./philo [philos] [die_ms] [eat_ms] [sleep_ms] *opt:[no_of_eat]\n"
 # define ERR_ARGS "Error: Please provide valid arguments\n"
 # define ERR_MS "=> Philos 1-200; die, eat, sleep >= 60; no_of_eat > 0\n"
-# define ERR_GEN "Error\n"
+# define ERR_GEN "Error initializing mutexes\n"
 # define MSG_FORK " has taken a fork"
 # define MSG_EAT " is eating"
 # define MSG_SLEEP " is sleeping"
 # define MSG_THINK " is thinking"
 # define MSG_DIED " died"
-# define MSG_ENOUGH " has eaten enough"
+# define MSG_ENOUGH " is done eating"
 # define LEFT 0
 # define RIGHT 1
 
 # define DEBUG 0
-
-
 
 # define RED "\e[0;31m"
 # define GRN "\e[0;32m"
@@ -83,45 +81,30 @@ typedef struct s_arg
 	struct s_init	init;
 }					t_arg;
 
-
-void		*philo_check(void *philo_arg);
-
+void		init_args(t_arg *args);
+int			fill_args(t_arg *args, char **argv);
 int			clean_exit(t_arg *args, t_philo **philos);
-
-void		philo_clean_forks(t_philo *philo);
-int			philo_take_forks(t_philo *philo);
+void		print_message(t_philo *philo, const char *message, t_msg_type type);
 
 int			init_philos(t_arg *args, t_philo **philos);
 int			init_forks(t_arg *args);
-void		init_args(t_arg *args);
-
-int			status_change_message(t_philo *philo, const char *message,
-				t_msg_type type);
-
+void		set_forks(int i, t_philo *philo, pthread_mutex_t *locks, pthread_mutex_t **p_locks);
+int			status_change_message(t_philo *philo, const char *message, t_msg_type type);
 int			lock_check(t_philo *philo, pthread_mutex_t *lock, const char *fn);
-int			update_eat_time(t_philo *philo);
-bool		has_eaten_enough(t_philo *philo);
-bool		gameover(t_philo *philo);
-void		u_sleep_better(uintmax_t usec);
 
+int			start_philo_threads(t_arg *args, t_philo *philos);
 void		*philo_start(void *philo_arg);
-int	philo_eat(t_philo *philo);
-int	philo_sleep(t_philo *philo);
-int	philo_think(t_philo *philo);
+void		*philo_check(void *philo_arg);
+bool		philo_died(t_philo *philo);
+bool		done_eating(t_philo *philo);
+
+int			philo_take_forks(t_philo *philo);
+int			philo_eat_sleep_think(t_philo *philo);
+void		*handle_eaten_death(t_philo *philo, char c);
 
 int			ft_atoi(const char *str);
-
-uintmax_t	retrieve_time_us(void);
+int			update_eat_time(t_philo *philo);
 uintmax_t	retrieve_time_since_ms(uintmax_t start);
-
-
-int			fill_args(t_arg *args, char **argv);
-int			start_philo_threads(t_arg *args, t_philo *philos);
-void	print_message(t_philo *philo, const char *message, t_msg_type type);
-void	set_philo_mutexes(int i, t_philo *philo, pthread_mutex_t *locks,
-			pthread_mutex_t **p_locks);
-void	*handle_full_philo(t_philo *philo);
-void	*handle_death(t_philo *philo);
-int	set_dead(t_philo *philo);
+void		u_sleep_better(uintmax_t usec);
 
 #endif

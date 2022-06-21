@@ -1,5 +1,29 @@
 #include "../includes/philo.h"
 
+int	clean_exit(t_arg *args, t_philo **philos)
+{
+	int	i;
+
+	i = -1;
+	if (args != NULL)
+	{
+		pthread_mutex_destroy(&args->msg_lock);
+		pthread_mutex_destroy(&args->dead_lock);
+	}
+	if (philos != NULL && args->init.philos)
+	{
+		while (++i < args->philos)
+		{
+			pthread_mutex_destroy(&((*philos)[i].eat_lock));
+			pthread_mutex_destroy(((*philos)[i].p_forks[LEFT]));
+		}
+		free(*philos);
+	}
+	if (args->init.fork)
+		free(args->forks);
+	exit(0);
+}
+
 void	print_message(t_philo *philo, const char *message, t_msg_type type)
 {
 	uintmax_t	time;
@@ -27,7 +51,6 @@ int	fill_args(t_arg *args, char **argv)
 	if (args->philos < 1 || args->philos > 200 || args->die_ms < 60
 		|| args->eat_ms < 60 || args->sleep_ms < 60 || args->no_of_eat < 0)
 		printf(ERR_ARGS ERR_MS) | clean_exit(args, NULL);
-    // printf("%d %d %d %d %d\n", args->philos, args->die_ms, args->eat_ms, args->sleep_ms, args->no_of_eat);
 	return (0);
 }
 
