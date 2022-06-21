@@ -1,15 +1,5 @@
 #include "../includes/philo.h"
 
-size_t	ft_strlen(const char *str)
-{
-	size_t	i;
-
-	i = 0;
-	while (str[i] != '\0')
-		i++;
-	return (i);
-}
-
 uintmax_t	retrieve_time_us(void)
 {
 	struct timeval	time;
@@ -21,14 +11,16 @@ uintmax_t	retrieve_time_us(void)
 	return (time_usec);
 }
 
-int	lock_check(t_philo *philo, pthread_mutex_t *lock, const char *fn)
+uintmax_t	retrieve_time_since_ms(uintmax_t start)
 {
-	if (pthread_mutex_lock(lock) != 0)
-	{
-		printf("philo [%d] | FAILED to lock in %s\n", philo->seat, fn);
-		return (1);
-	}
-	return (0);
+	struct timeval	time_now;
+	uintmax_t		time_ms;
+
+	gettimeofday(&time_now, NULL);
+	time_ms = (time_now.tv_sec * 1000) + (time_now.tv_usec / 1000);
+	if (time_ms < start)
+		return (0);
+	return (time_ms - start);
 }
 
 int	update_eat_time(t_philo *philo)
@@ -41,58 +33,30 @@ int	update_eat_time(t_philo *philo)
 	return (0);
 }
 
-void	u_sleep_better(uintmax_t usec)
+int	ft_atoi(const char *str)
 {
-	uintmax_t	start;
+	long	integer;
+	long	sign;
 
-	start = retrieve_time_us();
-	while (retrieve_time_us() - start < usec)
-		usleep(100);
-}
-
-int	clean_exit(t_arg *args, t_philo **philos)
-{
-	int	i;
-
-	i = 0;
-	if (args != NULL)
+	integer = 0;
+	sign = 1;
+	if (!str)
+		return (-1);
+	while (*str && (*str == 32 || (*str > 8 && *str < 14)))
+		str++;
+	if (*str == '-')
+		sign *= -1;
+	if (*str == '-' || *str == '+')
+		str++;
+	while (*str)
 	{
-		pthread_mutex_destroy(&args->msg_lock);
-		pthread_mutex_destroy(&args->dead_lock);
+		if (*str < '0' || *str > '9')
+			return (-1);
+		integer = integer * 10 + (*str - '0');
+		if ((sign * integer > INT_MAX) || (sign * integer < INT_MIN))
+			return (-1);
+		str++;
 	}
-	if (philos != NULL && args->init.philos)
-	{
-		while (i < args->philos)
-		{
-			pthread_mutex_destroy(&((*philos)[i].eat_lock));
-			pthread_mutex_destroy(((*philos)[i].p_forks[LEFT]));
-			i++;
-		}
-		free(*philos);
-	}
-	if (args->init.fork)
-		free(args->forks);
-	exit(0);
-}
-
-void	print_message(t_philo *philo, const char *message, t_msg_type type)
-{
-	uintmax_t	time;
-
-	time = retrieve_time_since_ms(philo->arg->start_ms);
-	printf("%s", get_philo_colour(philo->seat));
-	printf("%ju\tphilosopher [%d] %s.", time, philo->seat, message);
-	if (philo->arg->no_of_eat && type == EAT)
-		printf(" (%d/%d)", philo->times_eaten + 1, philo->arg->no_of_eat);
-	printf("\n%s", WHT);
-}
-
-int	set_dead(t_philo *philo)
-{
-	if (lock_check(philo, &philo->arg->dead_lock, "set_dead") != 0)
-		return (1);
-	philo->arg->is_dead = true;
-	pthread_mutex_unlock(&philo->arg->dead_lock);
-	return (0);
+	return (sign * integer);
 }
 

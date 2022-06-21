@@ -84,55 +84,44 @@ typedef struct s_arg
 }					t_arg;
 
 
-// check.c
 void		*philo_check(void *philo_arg);
 
-// exit.c
 int			clean_exit(t_arg *args, t_philo **philos);
 
-// fork.c
 void		philo_clean_forks(t_philo *philo);
 int			philo_take_forks(t_philo *philo);
 
-// init.c
 int			init_philos(t_arg *args, t_philo **philos);
 int			init_forks(t_arg *args);
 void		init_args(t_arg *args);
 
-// main.c
 int			status_change_message(t_philo *philo, const char *message,
 				t_msg_type type);
 
-// philo_utils.c
 int			lock_check(t_philo *philo, pthread_mutex_t *lock, const char *fn);
 int			update_eat_time(t_philo *philo);
 bool		has_eaten_enough(t_philo *philo);
 bool		gameover(t_philo *philo);
 void		u_sleep_better(uintmax_t usec);
 
-// philo.c
-void		*philo_do(void *philo_arg);
+void		*philo_start(void *philo_arg);
 int	philo_eat(t_philo *philo);
 int	philo_sleep(t_philo *philo);
 int	philo_think(t_philo *philo);
 
-// prog_utils.c
-const char	*get_philo_colour(int philo_seat);
-int			ft_strcmp(void *s1, void *s2);
 int			ft_atoi(const char *str);
 
-// time.c
 uintmax_t	retrieve_time_us(void);
 uintmax_t	retrieve_time_since_ms(uintmax_t start);
 
 
 int			fill_args(t_arg *args, char **argv);
-void		valid_args(t_arg *args);
 int			start_philo_threads(t_arg *args, t_philo *philos);
 void	print_message(t_philo *philo, const char *message, t_msg_type type);
-void	set_philo_mutexes(int idx, t_philo *philo, pthread_mutex_t *locks,
+void	set_philo_mutexes(int i, t_philo *philo, pthread_mutex_t *locks,
 			pthread_mutex_t **p_locks);
 void	*handle_full_philo(t_philo *philo);
+void	*handle_death(t_philo *philo);
 int	set_dead(t_philo *philo);
 
 #endif

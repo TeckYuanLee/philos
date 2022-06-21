@@ -1,5 +1,48 @@
 #include "../includes/philo.h"
 
+void	philo_clean_forks(t_philo *philo)
+{
+	pthread_mutex_unlock(philo->p_forks[LEFT]);
+	pthread_mutex_unlock(philo->p_forks[RIGHT]);
+	return ;
+}
+
+int	clean_exit(t_arg *args, t_philo **philos)
+{
+	int	i;
+
+	i = 0;
+	if (args != NULL)
+	{
+		pthread_mutex_destroy(&args->msg_lock);
+		pthread_mutex_destroy(&args->dead_lock);
+	}
+	if (philos != NULL && args->init.philos)
+	{
+		while (i < args->philos)
+		{
+			pthread_mutex_destroy(&((*philos)[i].eat_lock));
+			pthread_mutex_destroy(((*philos)[i].p_forks[LEFT]));
+			i++;
+		}
+		free(*philos);
+	}
+	if (args->init.fork)
+		free(args->forks);
+	exit(0);
+}
+
+void	set_philo_mutexes(int i, t_philo *philo, pthread_mutex_t *locks,
+			pthread_mutex_t **p_locks)
+{
+	p_locks[LEFT] = &locks[i];
+	if (i == philo->arg->philos - 1)
+		p_locks[RIGHT] = &locks[0];
+	else
+		p_locks[RIGHT] = &locks[i + 1];
+	// printf("%s lol %s lol\n", (char *)p_locks[LEFT], (char *)p_locks[RIGHT]);
+}
+
 int	init_philos(t_arg *args, t_philo **philos)
 {
 	int				i;
