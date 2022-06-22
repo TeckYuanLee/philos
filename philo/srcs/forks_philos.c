@@ -34,22 +34,22 @@ int	start_philo_threads(t_arg *args, t_philo *philos)
 	}
 	i = -1;
 	while (++i < args->philos)
-		pthread_join(philos[i].id, NULL); //makes sure all threads execute its task before quitting program
+		pthread_join(philos[i].id, NULL);
 	return (0);
 }
 
-void	set_forks(int i, t_philo *philo, pthread_mutex_t *locks, pthread_mutex_t **p_locks)
+void	assign_forks(int i, t_philo *philo, t_arg *args, pthread_mutex_t **hand)
 {
-	p_locks[LEFT] = &locks[i];
+	hand[LEFT] = &(args->forks[i]);
 	if (i == philo->arg->philos - 1)
-		p_locks[RIGHT] = &locks[0];
+		hand[RIGHT] = &(args->forks[0]);
 	else
-		p_locks[RIGHT] = &locks[i + 1];
+		hand[RIGHT] = &(args->forks[i + 1]);
 }
 
 int	init_philos(t_arg *args, t_philo **philos)
 {
-	int				i;
+	int	i;
 
 	*philos = NULL;
 	*philos = malloc(sizeof(t_philo) * args->philos);
@@ -62,12 +62,12 @@ int	init_philos(t_arg *args, t_philo **philos)
 		(*philos)[i].seat = i + 1;
 		(*philos)[i].active = false;
 		(*philos)[i].times_eaten = 0;
-		(*philos)[i].last_ate_ms = retrieve_time_since_ms(0);
+		(*philos)[i].last_ate_ms = get_time_ms();
 		(*philos)[i].deadline = (*philos)[i].last_ate_ms + args->die_ms;
 		(*philos)[i].arg = args;
 		if (pthread_mutex_init(&(*philos)[i].eat_lock, NULL))
 			return (1);
-		set_forks(i, &(*philos)[i], args->forks, (*philos)[i].p_forks);
+		assign_forks(i, &(*philos)[i], args, (*philos)[i].p_forks);
 	}
 	args->init.philos = true;
 	return (0);

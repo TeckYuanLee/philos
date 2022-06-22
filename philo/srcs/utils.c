@@ -1,22 +1,19 @@
 #include "../includes/philo.h"
 
-void	u_sleep_better(uintmax_t usec)
+void	usleep_chunks(uintmax_t ms)
 {
 	struct timeval	time;
 	uintmax_t		start;
-	uintmax_t		end;
-	
-	gettimeofday(&time, NULL);
-	start = (time.tv_sec * 1000000) + time.tv_usec;
-	while ((gettimeofday(&time, NULL)
-			| (time.tv_sec * 1000000) + time.tv_usec - start) < usec)
+
+	start = get_time_ms();
+	while ((get_time_ms() - start) < ms)
 		usleep(100);
 }
 
 void	update_eat_time(t_philo *philo)
 {
 	pthread_mutex_lock(&philo->eat_lock);
-	philo->last_ate_ms = retrieve_time_since_ms(0);
+	philo->last_ate_ms = get_time_ms();
 	philo->deadline = philo->last_ate_ms + philo->arg->die_ms;
 	pthread_mutex_unlock(&philo->eat_lock);
 }
@@ -48,26 +45,26 @@ int	ft_atoi(const char *str)
 	return (sign * integer);
 }
 
-void	print_message(t_philo *philo, const char *message, t_msg_type type)
+void	print(t_philo *philo, const char *message, t_state state)
 {
-	uintmax_t	time;
-	static const char	*colour[] = {RED, GRN, YEL, BLU, MAG, CYN};
+	uintmax_t			time;
+	static const char	*colour[] = {BHRED, BHGRN, BHCYN, BHBLU, BHMAG, BHYEL};
 
-	time = retrieve_time_since_ms(philo->arg->start_ms);
+	time = get_time_ms() - philo->arg->start_ms;
 	printf("%s", colour[philo->seat % 6]);
 	printf("%ju\tphilosopher [%d] %s.", time, philo->seat, message);
-	if (philo->arg->no_of_eat && type == EAT)
-		printf(" (%d/%d)", philo->times_eaten + 1, philo->arg->no_of_eat);
-	printf("\n%s", WHT);
+	if (philo->arg->eat_no && state == EAT)
+		printf(" (%d/%d)", philo->times_eaten + 1, philo->arg->eat_no);
+	printf("\n%s", BHWHT);
 }
 
-void	status_change_message(t_philo *philo, const char *message, t_msg_type type)
+void	update_state(t_philo *philo, const char *message, t_state state)
 {
 	pthread_mutex_lock(&philo->arg->msg_lock);
 	if (!philo_end(philo))
 	{
-		print_message(philo, message, type);
-		if (type == DEAD)
+		print(philo, message, state);
+		if (state == DEAD)
 		{
 			pthread_mutex_lock(&philo->arg->dead_lock);
 			philo->arg->is_dead = true;
