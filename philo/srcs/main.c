@@ -15,7 +15,7 @@ int	clean_exit(t_arg *args, t_philo **philos)
 		while (++i < args->philos)
 		{
 			pthread_mutex_destroy(&((*philos)[i].eat_lock));
-			pthread_mutex_destroy(((*philos)[i].p_forks[LEFT]));
+			pthread_mutex_destroy(((*philos)[i].hands[LEFT]));
 		}
 		free(*philos);
 	}
@@ -77,7 +77,7 @@ int	main(int argc, char **argv)
 		fill_args(&args, argv + 1);
 		if (init_forks(&args) || init_philos(&args, &philos))
 			return (printf(ERR_GEN) | clean_exit(&args, &philos));
-		if (start_philo_threads(&args, philos))
+		if (start_threads(&args, philos))
 			return (printf(ERR_GEN) | clean_exit(&args, &philos));
 		clean_exit(&args, &philos);
 	}

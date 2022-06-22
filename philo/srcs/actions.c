@@ -8,16 +8,16 @@ void	philo_action(t_philo *philo)
 		side = LEFT;
 	else
 		side = RIGHT;
-	pthread_mutex_lock(philo->p_forks[side]);
+	pthread_mutex_lock(philo->hands[side]);
 	update_state(philo, MSG_FORK, FORK);
-	pthread_mutex_lock(philo->p_forks[!side]);
+	pthread_mutex_lock(philo->hands[!side]);
 	update_state(philo, MSG_FORK, FORK);
-	update_eat_time(philo);
+	update_eaten_ms(philo);
 	update_state(philo, MSG_EAT, EAT);
 	usleep_chunks(philo->arg->eat_ms);
 	philo->times_eaten++;
-	pthread_mutex_unlock(philo->p_forks[LEFT]);
-	pthread_mutex_unlock(philo->p_forks[RIGHT]);
+	pthread_mutex_unlock(philo->hands[LEFT]);
+	pthread_mutex_unlock(philo->hands[RIGHT]);
 	update_state(philo, MSG_SLEEP, SLEEP);
 	usleep_chunks(philo->arg->sleep_ms);
 	update_state(philo, MSG_THINK, THINK);
@@ -33,9 +33,12 @@ void	*philos_eaten_dead(t_philo *philo, char c)
 	if (c == 'd')
 	{
 		update_state(philo, MSG_DIED, DEAD);
+		pthread_mutex_lock(&philo->arg->dead_lock);
+		philo->arg->is_dead = true;
+		pthread_mutex_unlock(&philo->arg->dead_lock);
 		pthread_mutex_unlock(&philo->eat_lock);
-		pthread_mutex_unlock(philo->p_forks[LEFT]);
-		pthread_mutex_unlock(philo->p_forks[RIGHT]);
+		pthread_mutex_unlock(philo->hands[LEFT]);
+		pthread_mutex_unlock(philo->hands[RIGHT]);
 	}
 	return (NULL);
 }
@@ -46,7 +49,7 @@ bool	done_eating(t_philo *philo)
 
 	done = false;
 	pthread_mutex_lock(&philo->eat_lock);
-	if (philo->arg->eat_no > 0
+	if (philo->arg->eat_no
 		&& philo->times_eaten == philo->arg->eat_no)
 		done = true;
 	pthread_mutex_unlock(&philo->eat_lock);
@@ -59,7 +62,7 @@ bool	philo_end(t_philo *philo)
 
 	done = false;
 	pthread_mutex_lock(&philo->arg->dead_lock);
-	if (philo->arg->is_dead == true
+	if (philo->arg->is_dead
 		|| philo->arg->philos_eaten == philo->arg->philos)
 		done = true;
 	pthread_mutex_unlock(&philo->arg->dead_lock);
@@ -69,19 +72,15 @@ bool	philo_end(t_philo *philo)
 void	*philo_check(void *philo_arg)
 {
 	t_philo		*philo;
-	uintmax_t	current_time;
 
 	philo = (t_philo *)philo_arg;
-	while (1)
+	while (philo->active)
 	{
-		if (!philo->active)
-			break ;
 		pthread_mutex_lock(&philo->eat_lock);
-		current_time = get_time_ms();
-		if (current_time > philo->deadline)
+		if (get_time_ms() > philo->deadline)
 			return (philos_eaten_dead(philo, 'd'));
 		pthread_mutex_unlock(&philo->eat_lock);
-		if (philo->arg->eat_no > 0 && done_eating(philo))
+		if (philo->arg->eat_no && done_eating(philo))
 			return (philos_eaten_dead(philo, 'e'));
 		usleep(1000);
 	}

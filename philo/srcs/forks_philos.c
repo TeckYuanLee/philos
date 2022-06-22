@@ -11,7 +11,7 @@ void	*philo_start(void *philo_arg)
 		return ((void *)1);
 	if (philo->seat % 2 == 0)
 		usleep(1000);
-	update_eat_time(philo);
+	update_eaten_ms(philo);
 	while (!philo_end(philo) && !done_eating(philo))
 	{
 		philo_action(philo);
@@ -22,7 +22,7 @@ void	*philo_start(void *philo_arg)
 	return (NULL);
 }
 
-int	start_philo_threads(t_arg *args, t_philo *philos)
+int	start_threads(t_arg *args, t_philo *philos)
 {
 	int	i;
 
@@ -38,13 +38,13 @@ int	start_philo_threads(t_arg *args, t_philo *philos)
 	return (0);
 }
 
-void	assign_forks(int i, t_philo *philo, t_arg *args, pthread_mutex_t **hand)
+void	assign_forks(int i, t_philo *philo, t_arg *args)
 {
-	hand[LEFT] = &(args->forks[i]);
+	philo->hands[LEFT] = &(args->forks[i]);
 	if (i == philo->arg->philos - 1)
-		hand[RIGHT] = &(args->forks[0]);
+		philo->hands[RIGHT] = &(args->forks[0]);
 	else
-		hand[RIGHT] = &(args->forks[i + 1]);
+		philo->hands[RIGHT] = &(args->forks[i + 1]);
 }
 
 int	init_philos(t_arg *args, t_philo **philos)
@@ -62,12 +62,12 @@ int	init_philos(t_arg *args, t_philo **philos)
 		(*philos)[i].seat = i + 1;
 		(*philos)[i].active = false;
 		(*philos)[i].times_eaten = 0;
-		(*philos)[i].last_ate_ms = get_time_ms();
-		(*philos)[i].deadline = (*philos)[i].last_ate_ms + args->die_ms;
+		(*philos)[i].eaten_ms = get_time_ms();
+		(*philos)[i].deadline = (*philos)[i].eaten_ms + args->die_ms;
 		(*philos)[i].arg = args;
 		if (pthread_mutex_init(&(*philos)[i].eat_lock, NULL))
 			return (1);
-		assign_forks(i, &(*philos)[i], args, (*philos)[i].p_forks);
+		assign_forks(i, &(*philos)[i], args);
 	}
 	args->init.philos = true;
 	return (0);

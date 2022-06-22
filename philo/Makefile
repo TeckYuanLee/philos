@@ -8,7 +8,7 @@ OBJS	=	$(SRCS:srcs/%.c=obj/%.o)
 
 obj/%.o:	srcs/%.c
 		@mkdir -p obj
-		@gcc $(CFLAGS) -fsanitize=thread -c $< -o $@ -Iincludes
+		gcc $(CFLAGS) -fsanitize=thread -g3 -c $< -o $@ -Iincludes
 
 all: $(NAME)
 
