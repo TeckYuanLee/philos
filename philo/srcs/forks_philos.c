@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   forks_philos.c                                     :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: telee <telee@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/06/23 18:49:52 by telee             #+#    #+#             */
+/*   Updated: 2022/06/23 18:49:52 by telee            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/philo.h"
 
 void	*philo_start(void *philo_arg)
@@ -6,7 +18,9 @@ void	*philo_start(void *philo_arg)
 	pthread_t	tid;
 
 	philo = (t_philo *)philo_arg;
+	// pthread_mutex_lock(&philo->arg->lock.eat);
 	philo->active = true;
+	// pthread_mutex_unlock(&philo->arg->lock.eat);
 	if (pthread_create(&tid, NULL, &philo_check, philo_arg))
 		return ((void *)1);
 	if (philo->seat % 2 == 0)

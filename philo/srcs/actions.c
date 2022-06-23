@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   actions.c                                          :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: telee <telee@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/06/23 18:49:55 by telee             #+#    #+#             */
+/*   Updated: 2022/06/23 18:49:55 by telee            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/philo.h"
 
 void	philo_action(t_philo *philo)
@@ -102,7 +114,7 @@ void	*philo_check(void *philo_arg)
 	t_philo		*philo;
 
 	philo = (t_philo *)philo_arg;
-	while (philo->active)
+	while (1/*philo->active*/)
 	{
 		pthread_mutex_lock(&philo->arg->lock.eat);
 		if (get_time_ms() > philo->deadline)

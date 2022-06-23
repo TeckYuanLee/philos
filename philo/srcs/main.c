@@ -1,3 +1,15 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   main.c                                             :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: telee <telee@student.42.fr>                +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2022/06/23 18:49:47 by telee             #+#    #+#             */
+/*   Updated: 2022/06/23 18:49:47 by telee            ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "../includes/philo.h"
 
 int	clean_exit(t_arg *args, t_philo **philos)
@@ -73,6 +85,7 @@ int	init_args(t_arg *args, char **argv)
 	if (args->philos < 1 || args->philos > 200 || args->die_ms < 60
 		|| args->eat_ms < 60 || args->sleep_ms < 60 || args->eat_no < 0)
 		return (printf(ERR_ARGS ERR_MS) | clean_exit(args, NULL));
+	return (0);
 }
 
 int	main(int argc, char **argv)
