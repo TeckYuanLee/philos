@@ -12,21 +12,26 @@
 
 #include "../includes/philo.h"
 
-void	usleep_chunks(uintmax_t ms)
+int	free_exit(t_arg *args, t_philo **philos)
 {
-	uintmax_t		start;
+	int	i;
 
-	start = get_time_ms();
-	while ((get_time_ms() - start) < ms)
-		usleep(50);
-}
-
-void	update_eaten_ms(t_philo *philo)
-{
-	pthread_mutex_lock(&philo->arg->lock.eat);
-	philo->eaten_ms = get_time_ms();
-	philo->deadline = philo->eaten_ms + philo->arg->die_ms;
-	pthread_mutex_unlock(&philo->arg->lock.eat);
+	i = -1;
+	if (args != NULL)
+	{
+		pthread_mutex_destroy(&args->lock.msg);
+		pthread_mutex_destroy(&args->lock.dead);
+		pthread_mutex_destroy(&args->lock.eat);
+	}
+	if (philos != NULL && args->init.philos)
+	{
+		while (++i < args->philos)
+			pthread_mutex_destroy(((*philos)[i].hands[LEFT]));
+		free(*philos);
+	}
+	if (args->init.fork)
+		free(args->lock.forks);
+	exit(0);
 }
 
 int	ft_atoi(char *str)

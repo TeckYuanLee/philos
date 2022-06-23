@@ -1,57 +1,16 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   forks_philos.c                                     :+:      :+:    :+:   */
+/*   main.c                                             :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: telee <telee@student.42.fr>                +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2022/06/23 18:49:52 by telee             #+#    #+#             */
-/*   Updated: 2022/06/23 18:49:52 by telee            ###   ########.fr       */
+/*   Created: 2022/06/23 18:49:47 by telee             #+#    #+#             */
+/*   Updated: 2022/06/23 18:49:47 by telee            ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/philo.h"
-
-void	*philo_start(void *philo_arg)
-{
-	t_philo		*philo;
-	pthread_t	tid;
-
-	philo = (t_philo *)philo_arg;
-	// pthread_mutex_lock(&philo->arg->lock.eat);
-	philo->active = true;
-	// pthread_mutex_unlock(&philo->arg->lock.eat);
-	if (pthread_create(&tid, NULL, &philo_check, philo_arg))
-		return ((void *)1);
-	if (philo->seat % 2 == 0)
-		usleep(1000);
-	update_eaten_ms(philo);
-	// while (!philo_end(philo) && !done_eating(philo))
-	while (!philo_status(philo, END))
-	{
-		philo_action(philo);
-		usleep(1000);
-	}
-	philo->active = false;
-	pthread_join(tid, NULL);
-	return (NULL);
-}
-
-int	start_threads(t_arg *args, t_philo *philos)
-{
-	int	i;
-
-	i = -1;
-	while (philos && ++i < args->philos)
-	{
-		if (pthread_create(&philos[i].id, NULL, &philo_start, &philos[i]))
-			return (1);
-	}
-	i = -1;
-	while (++i < args->philos)
-		pthread_join(philos[i].id, NULL);
-	return (0);
-}
 
 void	assign_forks(int i, t_philo *philo, t_arg *args)
 {
@@ -75,7 +34,6 @@ int	init_philos(t_arg *args, t_philo **philos)
 	{
 		(*philos)[i].id = 0;
 		(*philos)[i].seat = i + 1;
-		(*philos)[i].active = false;
 		(*philos)[i].times_eaten = 0;
 		(*philos)[i].eaten_ms = get_time_ms();
 		(*philos)[i].deadline = (*philos)[i].eaten_ms + args->die_ms;
@@ -106,5 +64,51 @@ int	init_locks(t_arg *args)
 			return (1);
 	}
 	args->init.fork = true;
+	return (0);
+}
+
+int	init_args(t_arg *args, char **argv)
+{
+	args->philos = 0;
+	args->die_ms = 0;
+	args->eat_ms = 0;
+	args->sleep_ms = 0;
+	args->start_ms = get_time_ms();
+	args->eat_no = 0;
+	args->philos_eaten = 0;
+	args->is_dead = false;
+	args->init.fork = false;
+	args->init.philos = false;
+	args->philos = ft_atoi(argv[0]);
+	args->die_ms = ft_atoi(argv[1]);
+	args->eat_ms = ft_atoi(argv[2]);
+	args->sleep_ms = ft_atoi(argv[3]);
+	args->eat_no = ft_atoi(argv[4]);
+	if (args->eat_no == 0)
+		return (printf(ERR_ARGS ERR_MS) | free_exit(args, NULL));
+	else if (!(argv[4]))
+		args->eat_no = 0;
+	if (args->philos < 1 || args->philos > 200 || args->die_ms < 60
+		|| args->eat_ms < 60 || args->sleep_ms < 60 || args->eat_no < 0)
+		return (printf(ERR_ARGS ERR_MS) | free_exit(args, NULL));
+	return (0);
+}
+
+int	main(int argc, char **argv)
+{
+	t_arg	args;
+	t_philo	*philos;
+
+	if (argc > 4 && argc < 7)
+	{
+		init_args(&args, argv + 1);
+		if (init_locks(&args) || init_philos(&args, &philos))
+			return (printf(ERR_GEN) | free_exit(&args, &philos));
+		if (create_threads(&args, philos))
+			return (printf(ERR_GEN) | free_exit(&args, &philos));
+		free_exit(&args, &philos);
+	}
+	else
+		return (printf(ERR_INPUT));
 	return (0);
 }

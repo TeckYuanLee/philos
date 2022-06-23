@@ -88,7 +88,6 @@ typedef struct s_philo
 {
 	pthread_t		id;
 	int				seat;
-	bool			active;
 	int				times_eaten;
 	uintmax_t		eaten_ms;
 	uintmax_t		deadline;
@@ -97,25 +96,23 @@ typedef struct s_philo
 }					t_philo;
 
 int			init_args(t_arg *args, char **argv);
-uintmax_t	get_time_ms(void);
-void		update_state(t_philo *philo, char *message, t_state state);
-int			clean_exit(t_arg *args, t_philo **philos);
-
 int			init_locks(t_arg *args);
 int			init_philos(t_arg *args, t_philo **philos);
 void		assign_forks(int i, t_philo *philo, t_arg *args);
-int			start_threads(t_arg *args, t_philo *philos);
+
+int			create_threads(t_arg *args, t_philo *philos);
 void		*philo_start(void *philo_arg);
-
 void		*philo_check(void *philo_arg);
-// bool		philo_end(t_philo *philo);
-// bool		done_eating(t_philo *philo);
-bool		philo_status(t_philo *philo, t_state state);
-void		philo_action(t_philo *philo);
 void		*philos_eaten_dead(t_philo *philo, t_state state);
+void		philo_action(t_philo *philo);
 
+bool		philo_status(t_philo *philo, t_state state);
+uintmax_t	get_time_ms(void);
 void		update_eaten_ms(t_philo *philo);
 void		usleep_chunks(uintmax_t usec);
+void		update_state(t_philo *philo, char *message, t_state state);
+
+int			free_exit(t_arg *args, t_philo **philos);
 int			ft_atoi(char *str);
 
 #endif
