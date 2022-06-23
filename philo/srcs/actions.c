@@ -23,49 +23,77 @@ void	philo_action(t_philo *philo)
 	update_state(philo, MSG_THINK, THINK);
 }
 
-void	*philos_eaten_dead(t_philo *philo, char c)
+void	*philos_eaten_dead(t_philo *philo, t_state state)
 {
-	if (c == 'e')
+	if (state == EATEN)
 	{
 		update_state(philo, MSG_EATEN, EATEN);
 		philo->arg->philos_eaten++;
 	}
-	if (c == 'd')
+	if (state == DEAD)
 	{
 		update_state(philo, MSG_DIED, DEAD);
-		pthread_mutex_lock(&philo->arg->dead_lock);
+		pthread_mutex_lock(&philo->arg->lock.dead);
 		philo->arg->is_dead = true;
-		pthread_mutex_unlock(&philo->arg->dead_lock);
-		pthread_mutex_unlock(&philo->eat_lock);
+		pthread_mutex_unlock(&philo->arg->lock.dead);
+		pthread_mutex_unlock(&philo->arg->lock.eat);
 		pthread_mutex_unlock(philo->hands[LEFT]);
 		pthread_mutex_unlock(philo->hands[RIGHT]);
 	}
 	return (NULL);
 }
 
-bool	done_eating(t_philo *philo)
+// bool	done_eating(t_philo *philo)
+// {
+// 	bool	done;
+
+// 	done = false;
+// 	pthread_mutex_lock(&philo->arg->lock.eat);
+// 	if (philo->arg->eat_no
+// 		&& philo->times_eaten == philo->arg->eat_no)
+// 		done = true;
+// 	pthread_mutex_unlock(&philo->arg->lock.eat);
+// 	return (done);
+// }
+
+// bool	philo_end(t_philo *philo)
+// {
+// 	bool	done;
+
+// 	done = false;
+// 	pthread_mutex_lock(&philo->arg->lock.dead);
+// 	if (philo->arg->is_dead
+// 		|| philo->arg->philos_eaten == philo->arg->philos)
+// 		done = true;
+// 	pthread_mutex_unlock(&philo->arg->lock.dead);
+// 	return (done);
+// }
+
+bool	philo_status(t_philo *philo, t_state state)
 {
 	bool	done;
 
-	done = false;
-	pthread_mutex_lock(&philo->eat_lock);
-	if (philo->arg->eat_no
-		&& philo->times_eaten == philo->arg->eat_no)
-		done = true;
-	pthread_mutex_unlock(&philo->eat_lock);
-	return (done);
-}
-
-bool	philo_end(t_philo *philo)
-{
-	bool	done;
-
-	done = false;
-	pthread_mutex_lock(&philo->arg->dead_lock);
-	if (philo->arg->is_dead
-		|| philo->arg->philos_eaten == philo->arg->philos)
-		done = true;
-	pthread_mutex_unlock(&philo->arg->dead_lock);
+	if (state == EATEN || state == END)
+	{
+		done = false;
+		pthread_mutex_lock(&philo->arg->lock.eat);
+		if (philo->arg->eat_no
+			&& philo->times_eaten == philo->arg->eat_no)
+			done = true;
+		pthread_mutex_unlock(&philo->arg->lock.eat);
+		if (state == EATEN)
+			return (done);
+	}
+	if (state == DEAD || (state == END && done == false))
+	{
+		done = false;
+		pthread_mutex_lock(&philo->arg->lock.dead);
+		if (philo->arg->is_dead
+			|| philo->arg->philos_eaten == philo->arg->philos)
+			done = true;
+		pthread_mutex_unlock(&philo->arg->lock.dead);
+		// return (done);
+	}
 	return (done);
 }
 
@@ -76,12 +104,13 @@ void	*philo_check(void *philo_arg)
 	philo = (t_philo *)philo_arg;
 	while (philo->active)
 	{
-		pthread_mutex_lock(&philo->eat_lock);
+		pthread_mutex_lock(&philo->arg->lock.eat);
 		if (get_time_ms() > philo->deadline)
-			return (philos_eaten_dead(philo, 'd'));
-		pthread_mutex_unlock(&philo->eat_lock);
-		if (philo->arg->eat_no && done_eating(philo))
-			return (philos_eaten_dead(philo, 'e'));
+			return (philos_eaten_dead(philo, DEAD));
+		pthread_mutex_unlock(&philo->arg->lock.eat);
+		// if (philo->arg->eat_no && done_eating(philo))
+		if (philo->arg->eat_no && philo_status(philo, EATEN))
+			return (philos_eaten_dead(philo, EATEN));
 		usleep(1000);
 	}
 	return (NULL);
