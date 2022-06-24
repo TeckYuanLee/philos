@@ -12,13 +12,20 @@
 
 #include "../includes/philo.h"
 
-void	assign_forks(int i, t_philo *philo, t_arg *args)
+int	create_threads(t_arg *args, t_philo *philos)
 {
-	philo->hands[LEFT] = &(args->lock.forks[i]);
-	if (i == philo->arg->philos - 1)
-		philo->hands[RIGHT] = &(args->lock.forks[0]);
-	else
-		philo->hands[RIGHT] = &(args->lock.forks[i + 1]);
+	int	i;
+
+	i = -1;
+	while (philos && ++i < args->philos)
+	{
+		if (pthread_create(&philos[i].id, NULL, &philo_start, &philos[i]))
+			return (1);
+	}
+	i = -1;
+	while (++i < args->philos)
+		pthread_join(philos[i].id, NULL);
+	return (0);
 }
 
 int	init_philos(t_arg *args, t_philo **philos)
@@ -38,7 +45,11 @@ int	init_philos(t_arg *args, t_philo **philos)
 		(*philos)[i].eaten_ms = get_time_ms();
 		(*philos)[i].deadline = (*philos)[i].eaten_ms + args->die_ms;
 		(*philos)[i].arg = args;
-		assign_forks(i, &(*philos)[i], args);
+		(*philos)[i].hands[LEFT] = &(args->lock.forks[i]);
+		if (i == (*philos)[i].arg->philos - 1)
+			(*philos)[i].hands[RIGHT] = &(args->lock.forks[0]);
+		else
+			(*philos)[i].hands[RIGHT] = &(args->lock.forks[i + 1]);
 	}
 	args->init.philos = true;
 	return (0);
@@ -103,12 +114,12 @@ int	main(int argc, char **argv)
 	{
 		init_args(&args, argv + 1);
 		if (init_locks(&args) || init_philos(&args, &philos))
-			return (printf(ERR_GEN) | free_exit(&args, &philos));
+			return (printf(ERR_LOCK) | free_exit(&args, &philos));
 		if (create_threads(&args, philos))
-			return (printf(ERR_GEN) | free_exit(&args, &philos));
+			return (printf(ERR_THREAD) | free_exit(&args, &philos));
 		free_exit(&args, &philos);
 	}
 	else
-		return (printf(ERR_INPUT));
+		return (printf(ERR_ARGS ERR_INPUT));
 	return (0);
 }

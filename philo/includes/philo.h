@@ -26,14 +26,15 @@
 # define ERR_INPUT "./philo [philos] [die_ms] [eat_ms] [sleep_ms] opt:[eat_no]\n"
 # define ERR_ARGS "Error: Please provide valid arguments\n"
 # define ERR_MS "=> Philos 1-200; die, eat, sleep >= 60; eat_no > 0\n"
-# define ERR_GEN "Error initializing mutexes\n"
+# define ERR_LOCK "Error initializing mutexes\n"
+# define ERR_THREAD "Error creating threads\n"
 
-# define MSG_FORK " has taken a fork"
-# define MSG_EAT " is eating"
-# define MSG_SLEEP " is sleeping"
-# define MSG_THINK " is thinking"
-# define MSG_DIED " died"
-# define MSG_EATEN " is done eating"
+# define MSG_FORK "has taken a fork"
+# define MSG_EAT "is eating"
+# define MSG_SLEEP "is sleeping"
+# define MSG_THINK "is thinking"
+# define MSG_DIED "died"
+# define MSG_EATEN "is done eating"
 
 # define LEFT 0
 # define RIGHT 1
@@ -98,20 +99,17 @@ typedef struct s_philo
 int			init_args(t_arg *args, char **argv);
 int			init_locks(t_arg *args);
 int			init_philos(t_arg *args, t_philo **philos);
-void		assign_forks(int i, t_philo *philo, t_arg *args);
-
 int			create_threads(t_arg *args, t_philo *philos);
+
 void		*philo_start(void *philo_arg);
 void		*philo_check(void *philo_arg);
 void		*philos_eaten_dead(t_philo *philo, t_state state);
 void		philo_action(t_philo *philo);
-
 bool		philo_status(t_philo *philo, t_state state);
+
 uintmax_t	get_time_ms(void);
-void		update_eaten_ms(t_philo *philo);
 void		usleep_chunks(uintmax_t usec);
 void		update_state(t_philo *philo, char *message, t_state state);
-
 int			free_exit(t_arg *args, t_philo **philos);
 int			ft_atoi(char *str);
 

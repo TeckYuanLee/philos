@@ -12,19 +12,75 @@
 
 #include "../includes/philo.h"
 
+int	ft_atoi(char *str)
+{
+	long	integer;
+	long	sign;
+
+	integer = 0;
+	sign = 1;
+	if (!str)
+		return (-1);
+	while (*str && (*str == 32 || (*str > 8 && *str < 14)))
+		str++;
+	if (*str == '-')
+		sign *= -1;
+	if (*str == '-' || *str == '+')
+		str++;
+	while (*str)
+	{
+		if (*str < '0' || *str > '9')
+			return (-1);
+		integer = integer * 10 + (*str - '0');
+		if ((sign * integer > INT_MAX) || (sign * integer < INT_MIN))
+			return (-1);
+		str++;
+	}
+	return (sign * integer);
+}
+
+int	free_exit(t_arg *args, t_philo **philos)
+{
+	int	i;
+
+	if (args->init.fork)
+	{
+		pthread_mutex_destroy(&args->lock.msg);
+		pthread_mutex_destroy(&args->lock.dead);
+		pthread_mutex_destroy(&args->lock.eat);
+		free(args->lock.forks);
+	}
+	if (philos != NULL && args->init.philos)
+	{
+		i = -1;
+		while (++i < args->philos)
+			pthread_mutex_destroy(((*philos)[i].hands[LEFT]));
+		free(*philos);
+	}
+	system("leaks philo");
+	exit(0);
+}
+
 void	update_state(t_philo *philo, char *message, t_state state)
 {
-	uintmax_t		time;
-	static char		*colour[] = {BHRED, BHGRN, BHCYN, BHBLU, BHMAG, BHYEL};
+	uintmax_t	time;
+	static char	*color[] = {BHRED, BHGRN, BHCYN, BHBLU, BHMAG, BHYEL, BHWHT};
 
+	if (state == EAT)
+	{
+		pthread_mutex_lock(&philo->arg->lock.eat);
+		philo->eaten_ms = get_time_ms();
+		philo->deadline = philo->eaten_ms + philo->arg->die_ms;
+		pthread_mutex_unlock(&philo->arg->lock.eat);
+	}
 	pthread_mutex_lock(&philo->arg->lock.msg);
 	if (!philo_status(philo, DEAD))
 	{
 		time = get_time_ms() - philo->arg->start_ms;
-		printf("%s", colour[philo->seat % 6]);
-		printf("%ju Philosophers [%d]%s", time, philo->seat, message);
+		printf("%s", color[philo->seat % 7]);
+		printf("%ju Philosophers [%d] %s", time, philo->seat, message);
 		if (philo->arg->eat_no && state == EAT)
-			printf(" (%d/%d)", philo->times_eaten + 1, philo->arg->eat_no);
+			printf(" (%d/%d)", ++philo->times_eaten, philo->arg->eat_no);
 		printf("\n%s", BHWHT);
 	}
 	pthread_mutex_unlock(&philo->arg->lock.msg);
@@ -39,45 +95,10 @@ void	usleep_chunks(uintmax_t ms)
 		usleep(50);
 }
 
-void	update_eaten_ms(t_philo *philo)
-{
-	pthread_mutex_lock(&philo->arg->lock.eat);
-	philo->eaten_ms = get_time_ms();
-	philo->deadline = philo->eaten_ms + philo->arg->die_ms;
-	pthread_mutex_unlock(&philo->arg->lock.eat);
-}
-
 uintmax_t	get_time_ms(void)
 {
 	struct timeval	time;
 
 	gettimeofday(&time, NULL);
 	return ((time.tv_sec * 1000) + (time.tv_usec / 1000));
-}
-
-bool	philo_status(t_philo *philo, t_state state)
-{
-	bool	done;
-
-	if (state == EATEN || state == END)
-	{
-		done = false;
-		pthread_mutex_lock(&philo->arg->lock.eat);
-		if (philo->arg->eat_no
-			&& philo->times_eaten == philo->arg->eat_no)
-			done = true;
-		pthread_mutex_unlock(&philo->arg->lock.eat);
-		if (state == EATEN)
-			return (done);
-	}
-	if (state == DEAD || (state == END && done == false))
-	{
-		done = false;
-		pthread_mutex_lock(&philo->arg->lock.dead);
-		if (philo->arg->is_dead
-			|| philo->arg->philos_eaten == philo->arg->philos)
-			done = true;
-		pthread_mutex_unlock(&philo->arg->lock.dead);
-	}
-	return (done);
 }

@@ -12,6 +12,31 @@
 
 #include "../includes/philo.h"
 
+bool	philo_status(t_philo *philo, t_state state)
+{
+	bool	done;
+
+	if (state == EATEN || state == END)
+	{
+		done = false;
+		pthread_mutex_lock(&philo->arg->lock.eat);
+		if (philo->arg->eat_no
+			&& philo->times_eaten == philo->arg->eat_no)
+			done = true;
+		pthread_mutex_unlock(&philo->arg->lock.eat);
+	}
+	if (state == DEAD || (state == END && done == false))
+	{
+		done = false;
+		pthread_mutex_lock(&philo->arg->lock.dead);
+		if (philo->arg->is_dead
+			|| philo->arg->philos_eaten == philo->arg->philos)
+			done = true;
+		pthread_mutex_unlock(&philo->arg->lock.dead);
+	}
+	return (done);
+}
+
 void	philo_action(t_philo *philo)
 {
 	int	side;
@@ -24,10 +49,8 @@ void	philo_action(t_philo *philo)
 	update_state(philo, MSG_FORK, FORK);
 	pthread_mutex_lock(philo->hands[!side]);
 	update_state(philo, MSG_FORK, FORK);
-	update_eaten_ms(philo);
 	update_state(philo, MSG_EAT, EAT);
 	usleep_chunks(philo->arg->eat_ms);
-	philo->times_eaten++;
 	pthread_mutex_unlock(philo->hands[LEFT]);
 	pthread_mutex_unlock(philo->hands[RIGHT]);
 	update_state(philo, MSG_SLEEP, SLEEP);
@@ -83,7 +106,6 @@ void	*philo_start(void *philo_arg)
 		return ((void *)1);
 	if (philo->seat % 2 == 0)
 		usleep(1000);
-	update_eaten_ms(philo);
 	while (!philo_status(philo, END))
 	{
 		philo_action(philo);
@@ -91,20 +113,4 @@ void	*philo_start(void *philo_arg)
 	}
 	pthread_join(tid, NULL);
 	return (NULL);
-}
-
-int	create_threads(t_arg *args, t_philo *philos)
-{
-	int	i;
-
-	i = -1;
-	while (philos && ++i < args->philos)
-	{
-		if (pthread_create(&philos[i].id, NULL, &philo_start, &philos[i]))
-			return (1);
-	}
-	i = -1;
-	while (++i < args->philos)
-		pthread_join(philos[i].id, NULL);
-	return (0);
 }
